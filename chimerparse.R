@@ -1,5 +1,6 @@
 # TODO(Callum)
 #   - Print the whole LMH/Sample type/date as string
+options(warn=-1) # suppress warnings
 
 # Get args from the command line
 args = commandArgs(trailingOnly=TRUE)
@@ -16,19 +17,21 @@ GetPackages <- function(required.packages) {
     required.packages[!(required.packages %in% installed.packages()[, "Package"])]
   if(length(packages.not.installed)){
     install.packages(packages.not.installed)}
-  lapply(required.packages, require, character.only = TRUE)
+  suppressMessages(lapply(required.packages, require, character.only = TRUE))
 }
 
 # Install/load required packages
-GetPackages(c("readxl", "stringr"))
+invisible(GetPackages(c("readxl", "stringr")))
 
 # Get the data
-if (length(args)==0) {
-  stop("Need to supply an input, e.g. Rscript chimerParser.R **input_file.xls**",
+if (length(args) < 2) {
+  stop(paste("Need to supply an input file and an output location, i.e. ",
+             "Rscript chimerParser.R input_file.xls ./some/location/output.csv",
+             sep=""),
        call.=FALSE)
 }
 
-data <- read_xlsx(args[1], col_names = F)
+suppressMessages(data <- read_xlsx(args[1], col_names = F))
 names(data) = c("A", "B", "C", "D", "E", "F")
 
 # Create a dataset with no NAs in the first column
