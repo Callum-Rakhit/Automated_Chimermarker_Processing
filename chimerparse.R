@@ -1,6 +1,6 @@
 # TODO(Callum)
 #   - Print the whole LMH/Sample type/date as string
-options(warn=-1) # suppress warnings
+options(warn=-1) # suppress warnings for clean cmd line output
 
 # Get args from the command line
 args = commandArgs(trailingOnly=TRUE)
@@ -54,7 +54,7 @@ cd15_string <- cd15_string[1,]
 # Function to append df with LMH, sample type, date, chimerism (%) & loci
 output_data <- data.frame(matrix(
   vector(), 0, 5, dimnames = list(c(), c(
-    "LMH_Number", "Sample_Type", "Date", "Average_Chimerism", "Informative_Loci"))),
+    "LMH_Number", "Date", "Sample_Type", "Average_Chimerism", "Informative_Loci"))),
   stringsAsFactors=F)
 
 bigParser <- function(string_type) {
