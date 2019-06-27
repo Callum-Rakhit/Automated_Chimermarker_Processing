@@ -1,5 +1,6 @@
 # TODO(Callum)
 #   - Print the whole LMH/Sample type/date as string
+
 options(warn=-1) # suppress warnings for clean cmd line output
 
 # Get args from the command line
@@ -20,10 +21,10 @@ GetPackages <- function(required.packages) {
   suppressMessages(lapply(required.packages, require, character.only = TRUE))
 }
 
-# Install/load required packages
+# Install/load required packages (invisibly)
 invisible(GetPackages(c("readxl", "stringr")))
 
-# Get the data
+# Warn user is they haven't specified the inout and output locations
 if (length(args) < 2) {
   stop(paste("Need to supply an input file and an output location, i.e. ",
              "Rscript chimerParser.R input_file.xls ./some/location/output.csv",
@@ -31,8 +32,9 @@ if (length(args) < 2) {
        call.=FALSE)
 }
 
-suppressMessages(data <- read_xlsx(args[1], col_names = F))
-names(data) = c("A", "B", "C", "D", "E", "F")
+# Read in and rename the data
+suppressMessages(data <- read_xlsx(args[1], col_names = F)) # Don't want any output on the cmd line
+names(data) = c("A", "B", "C", "D", "E", "F") # Give each column an arbitrary name
 
 # Create a dataset with no NAs in the first column
 data_no_NAs <- CompleteFun(data, 1)
@@ -42,21 +44,25 @@ bm_pattern <- "[:digit:][:digit:][:digit:][:digit:][:digit:][:digit:]-[A-Z][A-Z]
 cd3_pattern <- "[:digit:][:digit:][:digit:][:digit:][:digit:][:digit:]-[A-Z][A-Z][:digit:]_.............."
 cd15_pattern <- "[:digit:][:digit:][:digit:][:digit:][:digit:][:digit:]-[A-Z][A-Z][:digit:][:digit:]_.............."
 
+# Pattern for BM (bone marrow)
 bm_string <- str_extract_all(data, bm_pattern, simplify = T)
 bm_string <- bm_string[1,]
 
+# Pattern for CD3
 cd3_string <- str_extract_all(data, cd3_pattern, simplify = T)
 cd3_string <- cd3_string[1,]
 
+# Pattern for CD15
 cd15_string <- str_extract_all(data, cd15_pattern, simplify = T)
 cd15_string <- cd15_string[1,]
 
-# Function to append df with LMH, sample type, date, chimerism (%) & loci
+# Creates an output df to append with LMH, sample type, date, chimerism (%) & loci
 output_data <- data.frame(matrix(
   vector(), 0, 5, dimnames = list(c(), c(
     "LMH_Number", "Date", "Sample_Type", "Average_Chimerism", "Informative_Loci"))),
   stringsAsFactors=F)
 
+# Function to parse the file
 bigParser <- function(string_type) {
   for (i in 1:length(string_type)){
     # Extract the LMH/type/date name
