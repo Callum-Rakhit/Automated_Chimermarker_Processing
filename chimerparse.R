@@ -1,10 +1,11 @@
 # TODO(Callum)
 #   - Print the whole LMH/Sample type/date as string
 
-options(warn=-1) # suppress warnings for clean cmd line output
+# Suppress warnings for clean cmd line output
+options(warn = -1)
 
 # Get args from the command line
-args = commandArgs(trailingOnly=TRUE)
+args = commandArgs(trailingOnly = T)
 
 # Function to strip away empty cases
 CompleteFun <- function(data, desiredCols) {
@@ -28,7 +29,7 @@ invisible(GetPackages(c("readxl", "stringr")))
 if (length(args) < 2) {
   stop(paste("Need to supply an input file and an output location, i.e. ",
              "Rscript chimerParser.R input_file.xls ./some/location/output.csv",
-             sep=""),
+             sep = ""),
        call.=FALSE)
 }
 
