@@ -1,5 +1,4 @@
-# TODO(Callum)
-#   - Print the whole LMH/Sample type/date as string
+# No shebang line needed for Windows, just associate .R extension with a programme
 
 # Suppress warnings for clean cmd line output
 options(warn = -1)
@@ -7,99 +6,54 @@ options(warn = -1)
 # Get args from the command line
 args = commandArgs(trailingOnly = T)
 
-# Function to strip away empty cases
-CompleteFun <- function(data, desiredCols) {
-  completeVec <- complete.cases(data[, desiredCols])
-  return(data[completeVec, ])
-}
-
-# Function to check if packages are installed, if not, get them
-GetPackages <- function(required.packages) {
-  packages.not.installed <- 
-    required.packages[!(required.packages %in% installed.packages()[, "Package"])]
-  if(length(packages.not.installed)){
-    install.packages(packages.not.installed)}
-  suppressMessages(lapply(required.packages, require, character.only = TRUE))
-}
-
-# Install/load required packages (invisibly)
-invisible(GetPackages(c("readxl", "stringr")))
+# Load necessary libraries (need to install these manually in Windows)
+invisible(lapply(c("readxl", "stringr"), require, character.only = T))
 
 # Warn user is they haven't specified the inout and output locations
 if (length(args) < 2) {
   stop(paste("Need to supply an input file and an output location, i.e. ",
              "Rscript chimerParser.R input_file.xls ./some/location/output.csv",
              sep = ""),
-       call.=FALSE)
+       call.=F)
 }
 
 # Read in and rename the data
-suppressMessages(data <- read_xlsx(args[1], col_names = F)) # Don't want any output on the cmd line
-names(data) = c("A", "B", "C", "D", "E", "F") # Give each column an arbitrary name
+# suppressMessages(data <- read_xlsx(args[1], col_names = F)) # Don't want any output on the cmd line
 
-# Create a dataset with no NAs in the first column
-data_no_NAs <- CompleteFun(data, 1)
+args <- c("~/Downloads/20191230-Chimerism/", "~/Downloads/20191230-Chimerism/example.csv")
 
-# Find the strings in the file
-bm_pattern <- "[:digit:][:digit:][:digit:][:digit:][:digit:][:digit:]-[A-Z][A-Z]_.............."
-cd3_pattern <- "[:digit:][:digit:][:digit:][:digit:][:digit:][:digit:]-[A-Z][A-Z][:digit:]_.............."
-cd15_pattern <- "[:digit:][:digit:][:digit:][:digit:][:digit:][:digit:]-[A-Z][A-Z][:digit:][:digit:]_.............."
+# Needs to have the word "worksheet" in it
+suppressMessages(chimerism.masterworksheet <- Sys.glob(paths = paste(args[1], "*worksheet*", sep = "")))
+suppressMessages(chimerism.masterworksheet <- read_xlsx(path = chimerism.masterworksheet, col_names = T))
+colnames(chimerism.masterworksheet) <- c("Extraction_Type", "Extraction_Number", "HMDC_Referral_No", 
+                                         "Lab_Box_Number", "Well_Position", "Well_Row", "c_surname")
 
-# Pattern for BM (bone marrow)
-bm_string <- str_extract_all(data, bm_pattern, simplify = T)
-bm_string <- bm_string[1,]
+# Needs to have a dash "-" in it 
+chimerism.patients <- Sys.glob(paths = paste(args[1], "*-*", sep = ""))
+suppressMessages(chimerism.patients <- lapply(chimerism.patients, function(i){read_xlsx(path = i, col_names = F)}))
+chimerism.patients <- do.call(rbind, chimerism.patients)
+colnames(chimerism.patients) <- c("Column_A", "Column_B", "Column_C", "Column_D", "Column_E", "Column_F") # Give each column an arbitrary name
 
-# Pattern for CD3
-cd3_string <- str_extract_all(data, cd3_pattern, simplify = T)
-cd3_string <- cd3_string[1,]
-
-# Pattern for CD15
-cd15_string <- str_extract_all(data, cd15_pattern, simplify = T)
-cd15_string <- cd15_string[1,]
-
-# Creates an output df to append with LMH, sample type, date, chimerism (%) & loci
 output_data <- data.frame(matrix(
-  vector(), 0, 5, dimnames = list(c(), c(
-    "LMH_Number", "Date", "Sample_Type", "Average_Chimerism", "Informative_Loci"))),
+  vector(), 0, 3, dimnames = list(c(), c(
+    "Extraction_Number", "Average_Chimerism", "Informative_Loci"))),
   stringsAsFactors=F)
 
-# Function to parse the file
-bigParser <- function(string_type) {
-  for (i in 1:length(string_type)){
-    # Extract the LMH/type/date name
-    temp_var <- string_type[i]
-    
-    # Split it up and extract LMH/type/gate
-    temp_var_split <- str_split(temp_var, "-", simplify = T)
-    temp_var_split <- temp_var_split[1,]
-    temp_var_LMH <- temp_var_split[1]
-    temp_var_type <- str_split(temp_var_split[2], "_", simplify = T)[1]
-    temp_var_date <- paste(str_split(temp_var_split[2], "_", simplify = T)[3],
-                           temp_var_split[3], temp_var_split[4], sep = "_")
-    
-    # Split the no NA df using the LMH/type/date name
-    data_no_NAs$tab_id <- cumsum(grepl(temp_var, data_no_NAs$A))
-    df_split <- split(data_no_NAs[, -ncol(data_no_NAs)], data_no_NAs$tab_id)
-    df_split <- as.data.frame(df_split[2])
-    
-    # From the split df, get chimerism percent and loci number
-    temp_chimerism <- df_split[2][20,]
-    temp_loci <- df_split[2][24,]
-    temp_output_string <- c(temp_var_LMH, temp_var_date, temp_var_type,
-                            temp_chimerism, temp_loci)
-    output_data[nrow(output_data) + 1,] <<- temp_output_string
-  }
-}
+invisible(
+  lapply(chimerism.masterworksheet$Extraction_Number, function(x){
+    if (length(which(grepl(x, chimerism.patients$Column_A))) != 0) { 
+      temp_extractionIDrow <- which(grepl(x, chimerism.patients$Column_A))
+      temp_chimerism <- chimerism.patients[2][temp_extractionIDrow + 22,]
+      temp_loci <- chimerism.patients[2][temp_extractionIDrow + 26,]
+      temp_output_string <- c(x, temp_chimerism, temp_loci)
+      output_data[nrow(output_data) + 1,] <<- temp_output_string
+      }
+    })
+)
 
-# Run parser function across all patterns
-main <- function() {
-  bigParser(bm_string)
-  bigParser(cd15_string)
-  bigParser(cd3_string)
-  write.csv(x = output_data, file = args[2])
-}
+chimerism.masterworksheet <- merge(x = chimerism.masterworksheet, y = output_data, by = "Extraction_Number")
+colnames(chimerism.masterworksheet) <- c("Extraction::Extraction Number", "Extraction::Extraction Type", "Extraction::HMDC Referral No", 
+                                         "Extraction::Lab Box Number", "Extraction::Well Position", "Extraction::Well Row", 
+                                         "Extraction::c surname", "Extraction::Average Chimerism", "Extraction::Informative Loci")
 
-# If interactive R script, run main() function
-if (!interactive()) {
-  main()
-}
+write.csv(x = chimerism.masterworksheet, file = args[2])
