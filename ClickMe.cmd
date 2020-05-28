@@ -1,0 +1,1 @@
+"M:\CHIMERMARKER\Automated_Chimermarker_Processing\ChimerMarker\R-3.6.2\bin\Rscript.exe" "M:\CHIMERMARKER\Automated_Chimermarker_Processing\ChimerMarker\chimerparse.R"
