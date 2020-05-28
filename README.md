@@ -1,5 +1,7 @@
 # ChimerMarker output parser
 
+Simply clone this repository into "M:\CHIMERMARKER\" to restore
+
 This is a single script (chimerparse.R) which takes the .xlxs export from ChimerMarker and parses it into a simplified table with the key information.
 
 This is done through the Extraction ID value found in the file and searching specific rows that occur after the Extraction ID. 
