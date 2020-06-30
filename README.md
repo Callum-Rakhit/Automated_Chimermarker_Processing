@@ -18,7 +18,20 @@ Installed within the "ChimerMarker" folder
 
 ### How to run
 
-Click the "ClickMe.cm" file
+1) Clone the repo to a local directory which can access R
+
+
+```git clone https://github.com/Callum-Rakhit/Automated_Chimermarker_Processing.git```
+
+
+2) Add the files to be processed into the “Place_your_files_in_here” folder.
+
+3) Click the "ClickMe.cmd" file.
+
+4) Processed output will appear in folder
+
+
+
 
 This runs the chimerparse.R script on the input files placed in the "Place_your_files_in_here" folder
 
